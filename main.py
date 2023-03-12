@@ -3,57 +3,73 @@ import random
 
 
 class IdCounter:
+    def __init__(self):
+        self._current_id = 0
 
-    id_ = 0
+    def _increment_id(self):
+        self._current_id += 1
 
-    @classmethod
-    def get_id(cls) -> int:
-        cls.id_ += 1
-        return cls.id_
+    @property
+    def current_id(self):
+        return self._current_id
+
+    def get_new_id(self):
+        self._increment_id()
+        return self.current_id
+    # @classmethod
+    # def get_id(cls) -> int:
+    #     cls.id_ += 1
+    #     return cls.id_
 
 
 class Password:
     """
     Класс Пароли
     """
-    def __init__(self, password: str) -> None:
-        self.password = None
-        self._init_password(password)
+    # def __init__(self, password: str) -> None:
+    #     self.password = None
+    #     self._init_password(password)
 
-    def _init_password(self, password) -> None:
+    @staticmethod
+    def _init_password(password) -> None:
         if not isinstance(password, str):
             raise TypeError("Пароль должен быть типа str")
         if len(password) < 8:
             raise ValueError("Длина пароля должна быть не менее 8 символов")
         if not password.isalnum():
             raise ValueError("Пароль должены состоять из букв и цифр")
-        self.password = password
+        # self.password = password
+        return True
 
-    def get(self) -> str:
-        hash_password = hashlib.sha256(self.password.encode()).hexdigest()
-        return hash_password
+    @classmethod
+    def get(cls, password: str):
+        if cls._init_password(password):
+            hash_password = hashlib.sha256(password.encode()).hexdigest()
+            return hash_password
+        raise TypeError("Пароль должен быть строкой")
 
-    def check(self) -> bool:
-        if hashlib.sha256(self.password.encode()).hexdigest() == self.get():
-            return True
-        return False
+    # def check(self, password, ) -> bool:
+    #     if hashlib.sha256(self.password.encode()).hexdigest() == self.get():
+    #         return True
+    #     return False
 
 
 class Product:
     """
     Класс Продукты
     """
+    _counter = IdCounter()
 
     def __init__(self, name, price, rating) -> None:
-        self._id = IdCounter.get_id()
+        self._id = self._counter.get_new_id()
         self._name = None
         self.price = price
         self.rating = rating
         self._init_name(name)
 
-    @property
-    def id(self) -> int:
-        return self._id
+    # @property
+    # def id(self) -> int:
+    #     return self._id
 
     def _init_name(self, name) -> None:
         if not isinstance(name, str):
@@ -92,7 +108,7 @@ class Product:
         return f"{self._id}_{self._name}"
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.name}, {self.price}, {self.rating})"
+        return f"ID {self._id}: {self.__class__.__name__}({self.name}, {self.price}, {self.rating})"
 
 
 class Cart:
@@ -131,10 +147,11 @@ class User:
     """
     Класс Юзер
     """
+    _counter = IdCounter()
 
     def __init__(self, username: str, password: str) -> None:
-        self._id = IdCounter.get_id()
-        self.__password = Password(password).get()
+        self._id = self._counter.get_new_id()
+        self.__password = Password.get(password)
         self._username = None
         self._init_username(username)
         self.cart = Cart()
@@ -174,7 +191,7 @@ class Store:
     def __init__(self):
         username = input("Введите имя: ")
         password = input("Введите пароль: ")
-        self.user = User(username, password)
+        self.user = User(username, Password.get(password))
 
     def add_to_cart(self):
         self.user.cart.add_product(product_generator())
@@ -185,10 +202,12 @@ class Store:
 
 if __name__ == '__main__':
     shop = Store()
+    print(shop.user)
     print(shop.check_cart())
     shop.add_to_cart()
     print(shop.check_cart())
     shop2 = Store()
+    print(shop2.user)
     print(shop2.check_cart())
     shop2.add_to_cart()
     print(shop2.check_cart())
